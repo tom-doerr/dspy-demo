@@ -8,16 +8,6 @@ import time
 
 console = Console()
 
-class SimpleQA(dspy.Signature):
-    """Simple question-answering signature"""
-    input_question = dspy.InputField()
-    answer = dspy.OutputField(desc="Answer to the input question")
-
-class Summarizer(dspy.Signature):
-    """Text summarization signature"""
-    input_text = dspy.InputField()
-    summary = dspy.OutputField(desc="Concise summary of the input text")
-
 def print_result(title: str, content: str):
     """Print formatted results using Rich"""
     panel = Panel(
@@ -32,19 +22,21 @@ def run_qa_example():
     """Run a question-answering example"""
     try:
         console.print("[yellow]Running Q&A example...[/yellow]")
-        qa_program = dspy.Predict(SimpleQA)
         question = "What are the main benefits of using Stanford DSPy?"
 
         console.print(f"[yellow]Executing Q&A program with question: {question}[/yellow]")
-        result = qa_program(input_question=question)
 
-        if not result or not hasattr(result, 'answer'):
+        # Use DSPy's predictor directly with proper signature
+        predictor = dspy.Predict("question -> answer")
+        result = predictor(question=question).answer
+
+        if not result:
             console.print("[red]Error: Failed to get valid response from Q&A program[/red]")
             return
 
         print_result(
             "Question & Answer Example",
-            f"Q: {question}\nA: {result.answer}"
+            f"Q: {question}\nA: {result}"
         )
     except Exception as e:
         console.print(f"[red]Error in Q&A example: {str(e)}[/red]")
@@ -53,7 +45,6 @@ def run_summarization_example():
     """Run a text summarization example"""
     try:
         console.print("[yellow]Running summarization example...[/yellow]")
-        summarize_program = dspy.Predict(Summarizer)
         text = """
         Stanford DSPy is a framework for solving complex language tasks by programming with foundation models.
         It provides a powerful yet simple interface for creating, composing, and optimizing language model programs.
@@ -61,15 +52,18 @@ def run_summarization_example():
         """
 
         console.print("[yellow]Executing summarization program...[/yellow]")
-        result = summarize_program(input_text=text)
 
-        if not result or not hasattr(result, 'summary'):
+        # Use DSPy's predictor directly with proper signature
+        predictor = dspy.Predict("text -> summary")
+        result = predictor(text=text).summary
+
+        if not result:
             console.print("[red]Error: Failed to get valid response from summarization program[/red]")
             return
 
         print_result(
             "Summarization Example",
-            f"Original Text:\n{text}\n\nSummary:\n{result.summary}"
+            f"Original Text:\n{text}\n\nSummary:\n{result}"
         )
     except Exception as e:
         console.print(f"[red]Error in summarization example: {str(e)}[/red]")
@@ -85,23 +79,18 @@ def setup_dspy():
 
         # Configure OpenRouter endpoint
         console.print("[yellow]Configuring DSPy LM with OpenRouter settings:[/yellow]")
-        console.print("- Model: google/gemini-pro")
+        console.print("- Model: gemini/gemini-2.0-flash-lite-preview-02-05")
         console.print("- API Base: https://openrouter.ai/api/v1/chat/completions")
 
-        lm = dspy.LM(
-            model_type="openai",  # Using OpenAI-compatible endpoint
-            model="google/gemini-pro",  # Correct model identifier for OpenRouter
-            api_base="https://openrouter.ai/api/v1/chat/completions",  # Specific endpoint for chat completions
+        lm = dspy.OpenRouterLM(
+            model="gemini/gemini-2.0-flash-lite-preview-02-05",
+            api_base="https://openrouter.ai/api/v1/chat/completions",
             api_key=api_key,
-            headers={
-                "HTTP-Referer": "https://replit.com",
-                "X-Title": "Stanford DSPy Demo"
-            },
-            temperature=0.7,
-            max_tokens=1000
+            headers={"HTTP-Referer": "https://replit.com", "X-Title": "Stanford DSPy Demo"},
+            temperature=0.7
         )
 
-        dspy.settings.configure(lm=lm)
+        dspy.configure(lm=lm)
         console.print("[green]Successfully configured DSPy[/green]")
         return True
     except Exception as e:
