@@ -38,16 +38,16 @@ def run_demo() -> tuple[str, str]:
     result = predictor(prompt=prompt)
     return prompt, result.tweet
 
-# Model selection
+# Model selection in sidebar
 models = [
     "google/gemini-2.0-flash-001",
     "openai/gpt-3.5-turbo",
     "anthropic/claude-3-sonnet",
 ]
 
-# Add prefix option
-add_prefix = st.checkbox("Add 'openrouter/' prefix", value=True)
-selected_model = st.selectbox("Select Model", models)
+# Add prefix option in sidebar
+add_prefix = st.sidebar.checkbox("Add 'openrouter/' prefix", value=True)
+selected_model = st.sidebar.selectbox("Select Model", models)
 
 # Update model name based on prefix choice
 model_name = f"openrouter/{selected_model}" if add_prefix else selected_model
@@ -61,11 +61,11 @@ if 'error_message' not in st.session_state:
 # Configure DSPy when model changes
 error_msg = configure_dspy(model_name)
 if error_msg:
-    st.error(error_msg)
+    st.sidebar.error(error_msg)
     st.session_state.dspy_configured = False
     st.session_state.error_message = error_msg
 else:
-    st.success(f"DSPy configured successfully with model: {model_name}")
+    st.sidebar.success(f"DSPy configured successfully with model: {model_name}")
     st.session_state.dspy_configured = True
     st.session_state.error_message = None
     try:
