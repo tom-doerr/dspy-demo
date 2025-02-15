@@ -17,10 +17,19 @@ lm = dspy.LM(
         "X-Title": "Super Simple DSPy Demo"
     }
 )
+
+# Configure DSPy with our language model
 dspy.configure(lm=lm)
 
-# Create a basic predictor and ask a question
-predictor = dspy.ChainOfThought("question -> answer")
-result = predictor(question="What is DSPy and what is it used for?")
-print(f"\nQuestion: What is DSPy and what is it used for?")
+# Create a ChainOfThought predictor with system context
+predictor = dspy.ChainOfThought(
+    "question -> answer",
+    instructions="""You are a Stanford DSPy expert. DSPy is a framework for programming language models (LMs) 
+    that allows developers to write Python code instead of using traditional prompts to create and optimize AI systems."""
+)
+
+# Ask about DSPy's purpose
+question = "What is Stanford DSPy's main purpose and how does it differ from traditional prompting?"
+result = predictor(question=question)
+print(f"\nQuestion: {question}")
 print(f"Answer: {result.answer}")

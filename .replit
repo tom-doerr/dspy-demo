@@ -27,6 +27,10 @@ args = "Simple DSPy Demo"
 task = "workflow.run"
 args = "Super Simple DSPy Demo"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Streamlit DSPy Demo"
+
 [[workflows.workflow]]
 name = "DSPy Demo"
 author = "agent"
@@ -83,5 +87,24 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "python super_simple_dspy.py"
 
+[[workflows.workflow]]
+name = "Streamlit DSPy Demo"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run streamlit_dspy_demo.py --server.port 3000 --server.address 0.0.0.0"
+waitForPort = 3000
+
 [deployment]
 run = ["sh", "-c", "python dspy_demo.py"]
+
+[[ports]]
+localPort = 3000
+externalPort = 80

@@ -13,5 +13,7 @@ dependencies = [
     "openai>=1.63.0",
     "openrouter>=1.0",
     "rich>=13.9.4",
+    "streamlit>=1.42.0",
     "tenacity>=9.0.0",
+    "traceback-with-variables>=2.1.1",
 ]
