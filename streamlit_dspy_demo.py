@@ -6,7 +6,6 @@ from typing import Optional
 
 # Page config
 st.set_page_config(page_title="DSPy Demo", page_icon="🤖")
-st.title("DSPy Demo with OpenRouter")
 
 def configure_dspy(model_name: str) -> Optional[str]:
     """Configure DSPy with OpenRouter and return any error message"""
@@ -69,13 +68,10 @@ else:
     st.success(f"DSPy configured successfully with model: {model_name}")
     st.session_state.dspy_configured = True
     st.session_state.error_message = None
-
-# Show Run Demo button only after successful configuration
-if st.session_state.dspy_configured:
-    if st.button("Run Demo"):
-        try:
-            question, answer = run_demo()
-            st.write("Question:", question)
-            st.write("Answer:", answer)
-        except Exception as e:
-            st.error(f"Error running demo: {str(e)}\n\n{traceback.format_exc()}")
+    try:
+        # Run demo automatically after successful configuration
+        question, answer = run_demo()
+        st.write("Question:", question)
+        st.write("Answer:", answer)
+    except Exception as e:
+        st.error(f"Error running demo: {str(e)}\n\n{traceback.format_exc()}")
