@@ -6,7 +6,7 @@ import traceback
 # Page config
 st.set_page_config(page_title="DSPy Demo", page_icon="🤖")
 
-def configure_dspy():
+def configure_dspy(model_name: str):
     """Configure DSPy with OpenRouter"""
     try:
         api_key = os.getenv("OPENROUTER_API_KEY")
@@ -16,7 +16,7 @@ def configure_dspy():
 
         # Configure DSPy with OpenRouter
         lm = dspy.LM(
-            model="openai/gpt-3.5-turbo",
+            model=model_name,
             api_base="https://openrouter.ai/api/v1",
             api_key=api_key,
             headers={
@@ -47,9 +47,23 @@ def run_dspy_demo():
 # Main interface
 st.title("DSPy Minimal Demo")
 
+# Model selection
+models = [
+    "google/gemini-2.0-flash-001",
+    "openai/gpt-3.5-turbo",
+    "anthropic/claude-3-sonnet",
+]
+
+# Add prefix option
+add_prefix = st.checkbox("Add 'openrouter/' prefix", value=True)
+selected_model = st.selectbox("Select Model", models)
+
+# Update model name based on prefix choice
+model_name = f"openrouter/{selected_model}" if add_prefix else selected_model
+
 if st.button("Configure DSPy"):
-    if configure_dspy():
-        st.success("DSPy configured successfully!")
+    if configure_dspy(model_name):
+        st.success(f"DSPy configured successfully with model: {model_name}")
 
 if st.button("Run Demo"):
     run_dspy_demo()
