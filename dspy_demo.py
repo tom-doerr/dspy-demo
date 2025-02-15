@@ -5,6 +5,12 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 import time
+import litellm
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -28,7 +34,11 @@ def run_qa_example():
 
         # Use DSPy's predictor directly with proper signature
         predictor = dspy.Predict("question -> answer")
+        logger.debug("Created predictor instance")
+
+        logger.debug("Sending request to OpenRouter...")
         result = predictor(question=question).answer
+        logger.debug(f"Received response: {result}")
 
         if not result:
             console.print("[red]Error: Failed to get valid response from Q&A program[/red]")
@@ -39,7 +49,9 @@ def run_qa_example():
             f"Q: {question}\nA: {result}"
         )
     except Exception as e:
+        logger.error(f"Detailed error in Q&A example: {str(e)}", exc_info=True)
         console.print(f"[red]Error in Q&A example: {str(e)}[/red]")
+        console.print(f"[red]Error type: {type(e)}[/red]")
 
 def run_summarization_example():
     """Run a text summarization example"""
@@ -55,7 +67,11 @@ def run_summarization_example():
 
         # Use DSPy's predictor directly with proper signature
         predictor = dspy.Predict("text -> summary")
+        logger.debug("Created summarization predictor")
+
+        logger.debug("Sending request to OpenRouter...")
         result = predictor(text=text).summary
+        logger.debug(f"Received response: {result}")
 
         if not result:
             console.print("[red]Error: Failed to get valid response from summarization program[/red]")
@@ -66,35 +82,70 @@ def run_summarization_example():
             f"Original Text:\n{text}\n\nSummary:\n{result}"
         )
     except Exception as e:
+        logger.error(f"Detailed error in summarization example: {str(e)}", exc_info=True)
         console.print(f"[red]Error in summarization example: {str(e)}[/red]")
+        console.print(f"[red]Error type: {type(e)}[/red]")
+
+def test_api_connection():
+    """Test the OpenRouter API connection"""
+    try:
+        console.print("[yellow]Testing OpenRouter API connection...[/yellow]")
+        api_key = os.getenv("OPENROUTER_API_KEY")
+
+        # Make a simple test request using litellm directly
+        logger.debug("Making test request to OpenRouter")
+        response = litellm.completion(
+            model="openai/gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "Hello"}],
+            api_base="https://openrouter.ai/api/v1/chat/completions",
+            api_key=api_key,
+            headers={
+                "HTTP-Referer": "https://replit.com",
+                "X-Title": "Stanford DSPy Demo"
+            }
+        )
+        logger.debug(f"Test response received: {response}")
+        return True
+    except Exception as e:
+        logger.error(f"API test failed: {str(e)}", exc_info=True)
+        console.print(f"[red]API test failed: {str(e)}[/red]")
+        return False
 
 def setup_dspy():
-    """Configure DSPy with OpenRouter Gemini model"""
+    """Configure DSPy with OpenRouter model"""
     try:
-        console.print("[yellow]Setting up DSPy with OpenRouter Gemini model...[/yellow]")
+        console.print("[yellow]Setting up DSPy with OpenRouter model...[/yellow]")
 
         api_key = os.getenv("OPENROUTER_API_KEY")
         if api_key is None:
             raise ValueError("OpenRouter API key not found. Set OPENROUTER_API_KEY environment variable.")
 
-        # Configure OpenRouter endpoint
-        console.print("[yellow]Configuring DSPy LM with OpenRouter settings:[/yellow]")
-        console.print("- Model: gemini/gemini-2.0-flash-lite-preview-02-05")
-        console.print("- API Base: https://openrouter.ai/api/v1/chat/completions")
+        # Test API connection first
+        if not test_api_connection():
+            raise ValueError("Failed to connect to OpenRouter API")
 
-        lm = dspy.OpenRouterLM(
-            model="gemini/gemini-2.0-flash-lite-preview-02-05",
+        console.print("[yellow]Configuring DSPy LM with OpenRouter settings...[/yellow]")
+
+        # Configure OpenRouter endpoint with correct model identifier
+        lm = dspy.LM(
+            model="openai/gpt-3.5-turbo",  # Using a well-supported model
             api_base="https://openrouter.ai/api/v1/chat/completions",
             api_key=api_key,
-            headers={"HTTP-Referer": "https://replit.com", "X-Title": "Stanford DSPy Demo"},
-            temperature=0.7
+            headers={
+                "HTTP-Referer": "https://replit.com",
+                "X-Title": "Stanford DSPy Demo"
+            },
+            model_type="chat"  # Using chat completion type
         )
 
+        console.print("[yellow]Created OpenRouter LM instance, configuring DSPy...[/yellow]")
         dspy.configure(lm=lm)
         console.print("[green]Successfully configured DSPy[/green]")
         return True
     except Exception as e:
+        logger.error(f"Error setting up DSPy: {str(e)}", exc_info=True)
         console.print(f"[red]Error setting up DSPy: {str(e)}[/red]")
+        console.print(f"[red]Error type: {type(e)}[/red]")
         return False
 
 def main():

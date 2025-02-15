@@ -8,6 +8,7 @@ dependencies = [
     "dspy-ai>=2.6.3",
     "google-auth>=2.38.0",
     "httpx>=0.28.1",
+    "litellm>=1.61.3",
     "openai>=1.63.0",
     "openrouter>=1.0",
     "rich>=13.9.4",
