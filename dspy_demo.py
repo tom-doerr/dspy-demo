@@ -65,7 +65,7 @@ def setup_dspy():
 
         console.print("[yellow]Configuring DSPy with OpenRouter settings...[/yellow]")
 
-        # Configure DSPy to use OpenRouter via OpenAI-compatible interface
+        # Configure DSPy with just the model string
         lm = dspy.OpenAI(
             api_key=api_key,
             model="openrouter/google/gemini-1.0-pro",
