@@ -24,6 +24,67 @@ def print_result(title: str, content: str):
     console.print(panel)
     console.print()
 
+def test_api_connection():
+    """Test the OpenRouter API connection"""
+    try:
+        console.print("[yellow]Testing OpenRouter API connection...[/yellow]")
+        api_key = os.getenv("OPENROUTER_API_KEY")
+
+        # Make a simple test request using litellm directly
+        logger.debug("Making test request to OpenRouter")
+        response = litellm.completion(
+            model="openrouter/google/gemini-1.0-pro",
+            messages=[{"role": "user", "content": "Hello"}],
+            api_base="https://openrouter.ai/api/v1",
+            api_key=api_key,
+            headers={
+                "HTTP-Referer": "https://replit.com",
+                "X-Title": "Stanford DSPy Demo"
+            },
+            custom_llm_provider="openrouter"
+        )
+        logger.debug(f"Test response received: {response}")
+        return True
+    except Exception as e:
+        logger.error(f"API test failed: {str(e)}", exc_info=True)
+        console.print(f"[red]API test failed: {str(e)}[/red]")
+        return False
+
+def setup_dspy():
+    """Configure DSPy with OpenRouter model"""
+    try:
+        console.print("[yellow]Setting up DSPy with OpenRouter model...[/yellow]")
+
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if api_key is None:
+            raise ValueError("OpenRouter API key not found. Set OPENROUTER_API_KEY environment variable.")
+
+        # Test API connection first
+        if not test_api_connection():
+            raise ValueError("Failed to connect to OpenRouter API")
+
+        console.print("[yellow]Configuring DSPy with OpenRouter settings...[/yellow]")
+
+        # Configure DSPy to use OpenRouter via OpenAI-compatible interface
+        lm = dspy.OpenAI(
+            api_key=api_key,
+            model="openrouter/google/gemini-1.0-pro",
+            api_base="https://openrouter.ai/api/v1",
+            headers={
+                "HTTP-Referer": "https://replit.com",
+                "X-Title": "Stanford DSPy Demo"
+            }
+        )
+
+        console.print("[yellow]Created OpenRouter LM instance, configuring DSPy...[/yellow]")
+        dspy.configure(lm=lm)
+        console.print("[green]Successfully configured DSPy[/green]")
+        return True
+    except Exception as e:
+        logger.error(f"Error setting up DSPy: {str(e)}", exc_info=True)
+        console.print(f"[red]Error setting up DSPy: {str(e)}[/red]")
+        return False
+
 def run_qa_example():
     """Run a question-answering example"""
     try:
@@ -32,8 +93,7 @@ def run_qa_example():
 
         console.print(f"[yellow]Executing Q&A program with question: {question}[/yellow]")
 
-        # Use DSPy's predictor directly with proper signature
-        predictor = dspy.Predict("question -> answer")
+        predictor = dspy.ChainOfThought("question -> answer")
         logger.debug("Created predictor instance")
 
         logger.debug("Sending request to OpenRouter...")
@@ -65,8 +125,7 @@ def run_summarization_example():
 
         console.print("[yellow]Executing summarization program...[/yellow]")
 
-        # Use DSPy's predictor directly with proper signature
-        predictor = dspy.Predict("text -> summary")
+        predictor = dspy.ChainOfThought("text -> summary")
         logger.debug("Created summarization predictor")
 
         logger.debug("Sending request to OpenRouter...")
@@ -85,68 +144,6 @@ def run_summarization_example():
         logger.error(f"Detailed error in summarization example: {str(e)}", exc_info=True)
         console.print(f"[red]Error in summarization example: {str(e)}[/red]")
         console.print(f"[red]Error type: {type(e)}[/red]")
-
-def test_api_connection():
-    """Test the OpenRouter API connection"""
-    try:
-        console.print("[yellow]Testing OpenRouter API connection...[/yellow]")
-        api_key = os.getenv("OPENROUTER_API_KEY")
-
-        # Make a simple test request using litellm directly
-        logger.debug("Making test request to OpenRouter")
-        response = litellm.completion(
-            model="openai/gpt-3.5-turbo",
-            messages=[{"role": "user", "content": "Hello"}],
-            api_base="https://openrouter.ai/api/v1/chat/completions",
-            api_key=api_key,
-            headers={
-                "HTTP-Referer": "https://replit.com",
-                "X-Title": "Stanford DSPy Demo"
-            }
-        )
-        logger.debug(f"Test response received: {response}")
-        return True
-    except Exception as e:
-        logger.error(f"API test failed: {str(e)}", exc_info=True)
-        console.print(f"[red]API test failed: {str(e)}[/red]")
-        return False
-
-def setup_dspy():
-    """Configure DSPy with OpenRouter model"""
-    try:
-        console.print("[yellow]Setting up DSPy with OpenRouter model...[/yellow]")
-
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        if api_key is None:
-            raise ValueError("OpenRouter API key not found. Set OPENROUTER_API_KEY environment variable.")
-
-        # Test API connection first
-        if not test_api_connection():
-            raise ValueError("Failed to connect to OpenRouter API")
-
-        console.print("[yellow]Configuring DSPy LM with OpenRouter settings...[/yellow]")
-
-        # Configure OpenRouter endpoint with correct model identifier
-        lm = dspy.LM(
-            model="openai/gpt-3.5-turbo",  # Using a well-supported model
-            api_base="https://openrouter.ai/api/v1/chat/completions",
-            api_key=api_key,
-            headers={
-                "HTTP-Referer": "https://replit.com",
-                "X-Title": "Stanford DSPy Demo"
-            },
-            model_type="chat"  # Using chat completion type
-        )
-
-        console.print("[yellow]Created OpenRouter LM instance, configuring DSPy...[/yellow]")
-        dspy.configure(lm=lm)
-        console.print("[green]Successfully configured DSPy[/green]")
-        return True
-    except Exception as e:
-        logger.error(f"Error setting up DSPy: {str(e)}", exc_info=True)
-        console.print(f"[red]Error setting up DSPy: {str(e)}[/red]")
-        console.print(f"[red]Error type: {type(e)}[/red]")
-        return False
 
 def main():
     """Main function to run the demonstration"""
