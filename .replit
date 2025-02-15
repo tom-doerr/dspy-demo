@@ -99,8 +99,8 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run streamlit_dspy_demo.py --server.port 8501 --server.address 0.0.0.0"
-waitForPort = 8501
+args = "streamlit run streamlit_dspy_demo.py --server.port 3000 --server.address 0.0.0.0"
+waitForPort = 3000
 
 [deployment]
 run = ["sh", "-c", "python dspy_demo.py"]
@@ -108,7 +108,3 @@ run = ["sh", "-c", "python dspy_demo.py"]
 [[ports]]
 localPort = 3000
 externalPort = 80
-
-[[ports]]
-localPort = 8501
-externalPort = 3000
