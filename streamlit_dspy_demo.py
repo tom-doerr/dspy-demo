@@ -14,19 +14,20 @@ def configure_dspy(model_name: str) -> Optional[str]:
         if not api_key:
             return "Error: OPENROUTER_API_KEY environment variable is not set"
 
+        # Configure DSPy with OpenRouter
         lm = dspy.LM(
-            model=model_name,
-            api_base="https://openrouter.ai/api/v1",
+            model_name,
+            api_base="https://openrouter.ai/api/v1/chat/completions",
             api_key=api_key,
             headers={
-                "HTTP-Referer": "https://replit.com",
+                "HTTP-Referer": "https://github.com/stanfordnlp/dspy",
                 "X-Title": "DSPy Demo"
             }
         )
         dspy.configure(lm=lm)
         return None
     except Exception as e:
-        return f"Error configuring DSPy: {str(e)}"
+        return f"Error configuring DSPy: {str(e)}\n{traceback.format_exc()}"
 
 def run_demo() -> tuple[str, str]:
     """Run the DSPy demo and return question and answer"""
@@ -40,13 +41,13 @@ def run_demo() -> tuple[str, str]:
 
 # Model selection in sidebar
 models = [
-    "google/gemini-2.0-flash-001",
+    "google/gemini-pro",  # Updated model names
     "openai/gpt-3.5-turbo",
     "anthropic/claude-3-sonnet",
 ]
 
 # Add prefix option in sidebar
-add_prefix = st.sidebar.checkbox("Add 'openrouter/' prefix", value=True)
+add_prefix = st.sidebar.checkbox("Add 'openrouter/' prefix", value=True)  # Changed default to True
 selected_model = st.sidebar.selectbox("Select Model", models)
 
 # Update model name based on prefix choice
@@ -57,6 +58,9 @@ if 'dspy_configured' not in st.session_state:
     st.session_state.dspy_configured = False
 if 'error_message' not in st.session_state:
     st.session_state.error_message = None
+
+# Main content area title
+st.title("DSPy Tweet Generator")
 
 # Configure DSPy when model changes
 error_msg = configure_dspy(model_name)
