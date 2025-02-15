@@ -7,9 +7,14 @@ from rich.text import Text
 import time
 import logging
 import litellm
+import httpx
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Initialize Rich console
@@ -24,72 +29,44 @@ def print_result(title: str, content: str):
     )
     console.print(panel)
 
-def test_api_connection() -> bool:
-    """Test the OpenRouter API connection"""
-    try:
-        console.print("[yellow]Testing OpenRouter API connection...[/yellow]")
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        if not api_key:
-            raise ValueError("OpenRouter API key not found")
-
-        # Make a simple test request using litellm directly
-        logger.debug("Making test request to OpenRouter")
-        response = litellm.completion(
-            model="google/gemini-1.0-pro",
-            messages=[{"role": "user", "content": "Hello"}],
-            api_base="https://openrouter.ai/api/v1",
-            api_key=api_key,
-            headers={
-                "HTTP-Referer": "https://replit.com",
-                "X-Title": "Stanford DSPy Demo",
-                "Authorization": f"Bearer {api_key}"  # Added explicit bearer token
-            },
-            custom_llm_provider="openrouter"
-        )
-        logger.debug(f"Test response received: {response}")
-        return True
-    except Exception as e:
-        logger.error(f"API test failed: {str(e)}", exc_info=True)
-        console.print(f"[red]Error testing API connection: {str(e)}[/red]")
-        return False
-
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def setup_dspy() -> bool:
     """Set up DSPy with OpenRouter configuration"""
     try:
         console.print("[yellow]Setting up DSPy...[/yellow]")
-
-        # Test API connection first
-        if not test_api_connection():
-            return False
 
         api_key = os.getenv("OPENROUTER_API_KEY")
         if not api_key:
             console.print("[red]OpenRouter API key not found[/red]")
             return False
 
-        console.print("[yellow]Configuring DSPy with OpenRouter settings...[/yellow]")
-
         # Configure DSPy with OpenRouter model
         lm = dspy.LM(
-            model="google/gemini-1.0-pro",
+            model="openai/gpt-3.5-turbo",
             api_base="https://openrouter.ai/api/v1",
             api_key=api_key,
             headers={
                 "HTTP-Referer": "https://replit.com",
-                "X-Title": "Stanford DSPy Demo",
-                "Authorization": f"Bearer {api_key}"  # Added explicit bearer token
-            }
+                "X-Title": "Stanford DSPy Demo"
+            },
+            timeout=30
         )
 
-        console.print("[yellow]Created OpenRouter LM instance, configuring DSPy...[/yellow]")
+        console.print("[yellow]Configuring DSPy...[/yellow]")
         dspy.configure(lm=lm)
         console.print("[green]Successfully configured DSPy[/green]")
 
+        # Test the configuration with a simple completion
+        logger.debug("Testing DSPy configuration...")
+        predictor = dspy.Predict("question -> answer")
+        result = predictor(question="Is this a test?")
+        logger.debug("Test response received: %s", result)
+
         return True
     except Exception as e:
-        logger.error(f"DSPy setup failed: {str(e)}", exc_info=True)
+        logger.error("DSPy setup failed: %s", str(e), exc_info=True)
         console.print(f"[red]Error setting up DSPy: {str(e)}[/red]")
-        return False
+        raise
 
 def run_qa_example():
     """Run a question-answering example"""
@@ -103,25 +80,24 @@ def run_qa_example():
         logger.debug("Created predictor instance")
 
         logger.debug("Sending request to OpenRouter...")
-        result = predictor(question=question).answer
-        logger.debug(f"Received response: {result}")
+        result = predictor(question=question)
+        logger.debug("Received response from predictor: %s", result)
 
-        if not result:
+        if not result or not hasattr(result, 'answer'):
             console.print("[red]Error: Failed to get valid response from Q&A program[/red]")
             return
 
         print_result(
             "Question & Answer Example",
-            f"Q: {question}\nA: {result}"
+            f"Q: {question}\nA: {result.answer}"
         )
     except Exception as e:
-        logger.error(f"Detailed error in Q&A example: {str(e)}", exc_info=True)
+        logger.error("Detailed error in Q&A example: %s", str(e), exc_info=True)
         console.print(f"[red]Error in Q&A example: {str(e)}[/red]")
-        console.print(f"[red]Error type: {type(e)}[/red]")
 
 def main():
     """Main function to run the demonstration"""
-    console.print("[bold green]Stanford DSPy with OpenRouter Gemini Flash 2.0 Demo[/bold green]")
+    console.print("[bold green]Stanford DSPy Demo[/bold green]")
     console.print("=" * 80)
     console.print()
 

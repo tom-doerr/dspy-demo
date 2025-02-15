@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=0.45.2",
     "dspy>=2.6.3",
     "dspy-ai>=2.6.3",
     "google-auth>=2.38.0",
@@ -12,4 +13,5 @@ dependencies = [
     "openai>=1.63.0",
     "openrouter>=1.0",
     "rich>=13.9.4",
+    "tenacity>=9.0.0",
 ]
