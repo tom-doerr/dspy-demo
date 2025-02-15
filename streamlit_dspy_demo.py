@@ -31,12 +31,12 @@ def configure_dspy(model_name: str) -> Optional[str]:
 def run_demo() -> tuple[str, str]:
     """Run the DSPy demo and return question and answer"""
     predictor = dspy.ChainOfThought(
-        "question -> answer",
-        instructions="You are a Stanford DSPy expert. Explain DSPy's features clearly and concisely."
+        "prompt -> tweet",
+        instructions="You are a tech enthusiast creating engaging tweets. Generate a short, exciting tweet about Stanford DSPy that highlights its key features. Include relevant hashtags. Keep it under 280 characters."
     )
-    question = "What is Stanford DSPy and what makes it different from traditional prompting?"
-    result = predictor(question=question)
-    return question, result.answer
+    prompt = "Generate an engaging tweet about Stanford DSPy's innovative approach to AI programming"
+    result = predictor(prompt=prompt)
+    return prompt, result.tweet
 
 # Model selection
 models = [
@@ -70,8 +70,7 @@ else:
     st.session_state.error_message = None
     try:
         # Run demo automatically after successful configuration
-        question, answer = run_demo()
-        st.write("Question:", question)
-        st.write("Answer:", answer)
+        prompt, tweet = run_demo()
+        st.write("Generated Tweet:", tweet)
     except Exception as e:
         st.error(f"Error running demo: {str(e)}\n\n{traceback.format_exc()}")
