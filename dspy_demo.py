@@ -35,9 +35,9 @@ def test_api_connection():
         # Make a simple test request using litellm directly
         logger.debug("Making test request to OpenRouter")
         response = litellm.completion(
-            model="openrouter/google/gemini-1.0-pro",
+            model="google/gemini-1.0-pro",
             messages=[{"role": "user", "content": "Hello"}],
-            api_base="https://openrouter.ai/api/v1/chat/completions",
+            api_base="https://openrouter.ai/api/v1",
             api_key=api_key,
             headers={
                 "HTTP-Referer": "https://replit.com",
@@ -67,10 +67,10 @@ def setup_dspy():
 
         console.print("[yellow]Configuring DSPy with OpenRouter settings...[/yellow]")
 
-        # Configure DSPy to use OpenRouter via OpenAI-compatible interface
-        lm = dspy.OpenAILLM(
-            model="openrouter/google/gemini-1.0-pro",
-            api_base="https://openrouter.ai/api/v1/chat/completions",
+        # Configure DSPy with OpenRouter model
+        lm = dspy.LM(
+            model="google/gemini-1.0-pro",
+            api_base="https://openrouter.ai/api/v1",
             api_key=api_key,
             headers={
                 "HTTP-Referer": "https://replit.com",
