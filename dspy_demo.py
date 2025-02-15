@@ -5,26 +5,26 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 import time
-import litellm
 import logging
+import litellm
 
-# Configure logging
+# Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# Initialize Rich console
 console = Console()
 
 def print_result(title: str, content: str):
-    """Print formatted results using Rich"""
+    """Print a formatted result panel"""
     panel = Panel(
-        Text(content, style="blue"),
+        Text(content),
         title=title,
         border_style="green"
     )
     console.print(panel)
-    console.print()
 
-def test_api_connection():
+def test_api_connection() -> bool:
     """Test the OpenRouter API connection"""
     try:
         console.print("[yellow]Testing OpenRouter API connection...[/yellow]")
@@ -35,13 +35,14 @@ def test_api_connection():
         # Make a simple test request using litellm directly
         logger.debug("Making test request to OpenRouter")
         response = litellm.completion(
-            model="openrouter/google/gemini-1.0-pro",
+            model="google/gemini-1.0-pro",
             messages=[{"role": "user", "content": "Hello"}],
-            api_base="https://openrouter.ai/api/v1/chat/completions",
+            api_base="https://openrouter.ai/api/v1",
             api_key=api_key,
             headers={
                 "HTTP-Referer": "https://replit.com",
-                "X-Title": "Stanford DSPy Demo"
+                "X-Title": "Stanford DSPy Demo",
+                "Authorization": f"Bearer {api_key}"  # Added explicit bearer token
             },
             custom_llm_provider="openrouter"
         )
@@ -49,35 +50,44 @@ def test_api_connection():
         return True
     except Exception as e:
         logger.error(f"API test failed: {str(e)}", exc_info=True)
-        console.print(f"[red]API test failed: {str(e)}[/red]")
+        console.print(f"[red]Error testing API connection: {str(e)}[/red]")
         return False
 
-def setup_dspy():
-    """Configure DSPy with OpenRouter model"""
+def setup_dspy() -> bool:
+    """Set up DSPy with OpenRouter configuration"""
     try:
-        console.print("[yellow]Setting up DSPy with OpenRouter model...[/yellow]")
-
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        if api_key is None:
-            raise ValueError("OpenRouter API key not found. Set OPENROUTER_API_KEY environment variable.")
+        console.print("[yellow]Setting up DSPy...[/yellow]")
 
         # Test API connection first
         if not test_api_connection():
-            raise ValueError("Failed to connect to OpenRouter API")
+            return False
+
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            console.print("[red]OpenRouter API key not found[/red]")
+            return False
 
         console.print("[yellow]Configuring DSPy with OpenRouter settings...[/yellow]")
 
-        # Configure DSPy with basic LM setup
+        # Configure DSPy with OpenRouter model
         lm = dspy.LM(
-            model="google/gemini-pro",
+            model="google/gemini-1.0-pro",
+            api_base="https://openrouter.ai/api/v1",
+            api_key=api_key,
+            headers={
+                "HTTP-Referer": "https://replit.com",
+                "X-Title": "Stanford DSPy Demo",
+                "Authorization": f"Bearer {api_key}"  # Added explicit bearer token
+            }
         )
 
         console.print("[yellow]Created OpenRouter LM instance, configuring DSPy...[/yellow]")
         dspy.configure(lm=lm)
         console.print("[green]Successfully configured DSPy[/green]")
+
         return True
     except Exception as e:
-        logger.error(f"Error setting up DSPy: {str(e)}", exc_info=True)
+        logger.error(f"DSPy setup failed: {str(e)}", exc_info=True)
         console.print(f"[red]Error setting up DSPy: {str(e)}[/red]")
         return False
 
