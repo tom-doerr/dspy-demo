@@ -29,13 +29,15 @@ def test_api_connection():
     try:
         console.print("[yellow]Testing OpenRouter API connection...[/yellow]")
         api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise ValueError("OpenRouter API key not found")
 
         # Make a simple test request using litellm directly
         logger.debug("Making test request to OpenRouter")
         response = litellm.completion(
             model="openrouter/google/gemini-1.0-pro",
             messages=[{"role": "user", "content": "Hello"}],
-            api_base="https://openrouter.ai/api/v1",
+            api_base="https://openrouter.ai/api/v1/chat/completions",
             api_key=api_key,
             headers={
                 "HTTP-Referer": "https://replit.com",
@@ -65,11 +67,11 @@ def setup_dspy():
 
         console.print("[yellow]Configuring DSPy with OpenRouter settings...[/yellow]")
 
-        # Configure DSPy with just the model string
-        lm = dspy.OpenAI(
-            api_key=api_key,
+        # Configure DSPy to use OpenRouter via OpenAI-compatible interface
+        lm = dspy.OpenAILLM(
             model="openrouter/google/gemini-1.0-pro",
-            api_base="https://openrouter.ai/api/v1",
+            api_base="https://openrouter.ai/api/v1/chat/completions",
+            api_key=api_key,
             headers={
                 "HTTP-Referer": "https://replit.com",
                 "X-Title": "Stanford DSPy Demo"
@@ -113,38 +115,6 @@ def run_qa_example():
         console.print(f"[red]Error in Q&A example: {str(e)}[/red]")
         console.print(f"[red]Error type: {type(e)}[/red]")
 
-def run_summarization_example():
-    """Run a text summarization example"""
-    try:
-        console.print("[yellow]Running summarization example...[/yellow]")
-        text = """
-        Stanford DSPy is a framework for solving complex language tasks by programming with foundation models.
-        It provides a powerful yet simple interface for creating, composing, and optimizing language model programs.
-        The framework enables developers to build reliable NLP applications while maintaining control over the development process.
-        """
-
-        console.print("[yellow]Executing summarization program...[/yellow]")
-
-        predictor = dspy.ChainOfThought("text -> summary")
-        logger.debug("Created summarization predictor")
-
-        logger.debug("Sending request to OpenRouter...")
-        result = predictor(text=text).summary
-        logger.debug(f"Received response: {result}")
-
-        if not result:
-            console.print("[red]Error: Failed to get valid response from summarization program[/red]")
-            return
-
-        print_result(
-            "Summarization Example",
-            f"Original Text:\n{text}\n\nSummary:\n{result}"
-        )
-    except Exception as e:
-        logger.error(f"Detailed error in summarization example: {str(e)}", exc_info=True)
-        console.print(f"[red]Error in summarization example: {str(e)}[/red]")
-        console.print(f"[red]Error type: {type(e)}[/red]")
-
 def main():
     """Main function to run the demonstration"""
     console.print("[bold green]Stanford DSPy with OpenRouter Gemini Flash 2.0 Demo[/bold green]")
@@ -156,9 +126,6 @@ def main():
 
     # Add some delay between API calls to respect rate limits
     run_qa_example()
-    time.sleep(2)
-
-    run_summarization_example()
     time.sleep(2)
 
     console.print("[bold green]Demo completed![/bold green]")
